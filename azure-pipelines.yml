@@ -1,55 +1,79 @@
 jobs:
 - job: kernel
+  variables:
+    GCC_REPO: https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6
+    GCC_PREFIX: x86_64-linux-
   pool:
     vmImage: 'ubuntu-16.04'
+  strategy:
+    maxParallel: 10
+    matrix:
+      4.18:
+        KERNEL_REPOSITORY: https://github.com/maurossi/linux
+        KERNEL_BRANCH: kernel-4.18
+      4.19:
+        KERNEL_REPOSITORY: https://github.com/maurossi/linux
+        KERNEL_BRANCH: kernel-4.19
+      4.20rc1:
+        KERNEL_REPOSITORY: https://github.com/maurossi/linux
+        KERNEL_BRANCH: kernel-4.20rc1
+      4.20rc4:
+        KERNEL_REPOSITORY: https://github.com/maurossi/linux
+        KERNEL_BRANCH: kernel-4.20rc4
   steps:
   - script: |
-      apt list --installed | grep java
-      apt list --installed | grep jdk
-
-      sudo apt-get remove -y openjdk-11-jre openjdk-11-jdk openjdk-11-jdk-headless
-      sudo apt-get remove -y openjdk-10-jre openjdk-10-jdk openjdk-10-jdk-headless
-      sudo apt-get remove -y openjdk-9-jre openjdk-9-jdk openjdk-9-jdk-headless
-      sudo apt-get remove -y openjdk-7-jre openjdk-7-jdk openjdk-7-jdk-headless
-      sudo apt-get install -y repo bc openjdk-8-jdk
-
-      apt list --installed | grep java
-      apt list --installed | grep jdk
-      apt list --installed | grep jre
-
-      update-java-alternatives --list
-      sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
-
-      which javac
-      javac -version
-
-      which java
-      java -version
+      sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
     displayName: Install dependencies
 
   - script: |
-      git config --global user.email "Azure Pipelines"
-      git config --global user.name "docker-android-x86@github.com"
-
-      repo init -q -u git://git.osdn.net/gitroot/android-x86/manifest -b nougat-x86 --depth=1
-
-      repo sync --no-tags --no-clone-bundle kernel
-      repo sync --no-tags --no-clone-bundle device/generic/common device/generic/firmware device/generic/x86 device/generic/x86_64
-      repo sync --no-tags --no-clone-bundle frameworks/native
-      repo sync --no-tags --no-clone-bundle build build/kati
-      repo sync --no-tags --no-clone-bundle prebuilts/clang/host/linux-x86 prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8 prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6 prebuilts/sdk prebuilts/ninja/linux-x86 prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9
-      repo sync --no-tags --no-clone-bundle external/bison external/libcxx external/compiler-rt external/libcxxabi
+      git clone --depth=1 -b $KERNEL_BRANCH $KERNEL_REPOSITORY kernel
+      git clone --depth=1 -b master $GCC_REPO gcc
     displayName: Clone the Android repo
 
   - script: |
-      make kernel TARGET_PRODUCT=android_x86_64
-    displayName: Build the Android kernel
+      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      mkdir -p $out
+      cd kernel
+
+      echo Configuring kernel configuration
+      cp arch/x86/configs/android-x86_64_defconfig .config
+      make O=$out ARCH=x86_64 olddefconfig
+
+      cp .config arch/x86/configs/android-x86_64_defconfig
+      cp arch/x86/configs/android-x86_64_defconfig $out
+      git clean -xfd .
+      git diff .
+    displayName: Update kernel config
 
   - script: |
-      mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
-      ls -l out/target/product/x86_64/*
-      cp -r out/target/product/x86_64/* $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
-    displayName: Copy the Android kernel artifacts
+      # See https://github.com/maurossi/linux/blob/kernel-4.20rc4/drivers/net/wireless/broadcom/wl/build.mk
+      cd $BUILD_SOURCESDIRECTORY/kernel
+      BROADCOM_DIR=drivers/net/wireless/broadcom/wl
+
+      wget https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/hybrid-v35_64-nodebug-pcoem-6_30_223_271.tar.gz
+      tar zxf hybrid-v35_64-nodebug-pcoem-6_30_223_271.tar.gz -C $BROADCOM_DIR --overwrite -m
+      rm -rf hybrid-v35_64-nodebug-pcoem-6_30_223_271.tar.gz
+
+      mv $BROADCOM_DIR/lib BROADCOM_DIR/lib64
+
+      patch -p1 -d $BROADCOM_DIR -i wl.patch
+      patch -p1 -d $BROADCOM_DIR -i linux-recent.patch
+      patch -p1 -d $BROADCOM_DIR -i linux-48.patch
+      patch -p1 -d $BROADCOM_DIR -i linux-411.patch
+      patch -p1 -d $BROADCOM_DIR -i linux-412.patch
+      patch -p1 -d $BROADCOM_DIR -i linux-415.patch
+    displayName: Install Broadcom drivers
+
+  - script: |
+      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      export gcc=$(pwd)/gcc/bin/$GCC_PREFIX
+
+      cd $BUILD_SOURCESDIRECTORY/kernel
+      make O=$out ARCH=x86_64 android-x86_64_defconfig
+
+      echo Building kernel
+      make O=$out ARCH=x86_64 CROSS_COMPILE=$gcc -j$(nproc --all)
+    displayName: Compile the Android kernel
 
   - task: PublishBuildArtifacts@1
     inputs:
