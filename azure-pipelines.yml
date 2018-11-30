@@ -1,0 +1,58 @@
+jobs:
+- job: kernel
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - script: |
+      apt list --installed | grep java
+      apt list --installed | grep jdk
+
+      sudo apt-get remove -y openjdk-11-jre openjdk-11-jdk openjdk-11-jdk-headless
+      sudo apt-get remove -y openjdk-10-jre openjdk-10-jdk openjdk-10-jdk-headless
+      sudo apt-get remove -y openjdk-9-jre openjdk-9-jdk openjdk-9-jdk-headless
+      sudo apt-get remove -y openjdk-7-jre openjdk-7-jdk openjdk-7-jdk-headless
+      sudo apt-get install -y repo bc openjdk-8-jdk
+
+      apt list --installed | grep java
+      apt list --installed | grep jdk
+      apt list --installed | grep jre
+
+      update-java-alternatives --list
+      sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+
+      which javac
+      javac -version
+
+      which java
+      java -version
+    displayName: Install dependencies
+
+  - script: |
+      git config --global user.email "Azure Pipelines"
+      git config --global user.name "docker-android-x86@github.com"
+
+      repo init -q -u git://git.osdn.net/gitroot/android-x86/manifest -b nougat-x86 --depth=1
+
+      repo sync --no-tags --no-clone-bundle kernel
+      repo sync --no-tags --no-clone-bundle device/generic/common device/generic/firmware device/generic/x86 device/generic/x86_64
+      repo sync --no-tags --no-clone-bundle frameworks/native
+      repo sync --no-tags --no-clone-bundle build build/kati
+      repo sync --no-tags --no-clone-bundle prebuilts/clang/host/linux-x86 prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8 prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6 prebuilts/sdk prebuilts/ninja/linux-x86 prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9
+      repo sync --no-tags --no-clone-bundle external/bison external/libcxx external/compiler-rt external/libcxxabi
+    displayName: Clone the Android repo
+
+  - script: |
+      make kernel TARGET_PRODUCT=android_x86_64
+    displayName: Build the Android kernel
+
+  - script: |
+      mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      ls -l out/target/product/x86_64/*
+      cp -r out/target/product/x86_64/* $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+    displayName: Copy the Android kernel artifacts
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/'
+      artifactName: kernel
+    displayName: Publish kernel
