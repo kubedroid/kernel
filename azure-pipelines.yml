@@ -65,14 +65,26 @@ jobs:
     displayName: Install Broadcom drivers
 
   - script: |
-      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel-build/
+      export install=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
       export gcc=$(pwd)/gcc/bin/$GCC_PREFIX
 
       cd $BUILD_SOURCESDIRECTORY/kernel
-      make O=$out ARCH=x86_64 android-x86_64_defconfig
+      export O=$out
+      export ARCH=x86_64
+      export CROSS_COMPILE=$gcc
+      export INSTALL_MOD_PATH=$install
+      export INSTALL_PATH=$install
+
+      make android-x86_64_defconfig
 
       echo Building kernel
-      make O=$out ARCH=x86_64 CROSS_COMPILE=$gcc -j$(nproc --all)
+      make -j$(nproc --all)
+
+      echo Installing the kernel and kernel modules
+      make modules_install
+      make install
+
     displayName: Compile the Android kernel
 
   - task: PublishBuildArtifacts@1
