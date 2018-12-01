@@ -54,7 +54,7 @@ jobs:
       tar zxf hybrid-v35_64-nodebug-pcoem-6_30_223_271.tar.gz -C $BROADCOM_DIR --overwrite -m
       rm -rf hybrid-v35_64-nodebug-pcoem-6_30_223_271.tar.gz
 
-      mv $BROADCOM_DIR/lib BROADCOM_DIR/lib64
+      mv $BROADCOM_DIR/lib $BROADCOM_DIR/lib64
 
       patch -p1 -d $BROADCOM_DIR -i wl.patch
       patch -p1 -d $BROADCOM_DIR -i linux-recent.patch
