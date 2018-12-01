@@ -66,7 +66,7 @@ jobs:
 
   - script: |
       export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel-build/
-      export install=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      export install=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel-install/
       export gcc=$(pwd)/gcc/bin/$GCC_PREFIX
 
       cd $BUILD_SOURCESDIRECTORY/kernel
@@ -85,6 +85,8 @@ jobs:
       make modules_install
       make install
 
+      mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/kernel.tar.gz $install
     displayName: Compile the Android kernel
 
   - task: PublishBuildArtifacts@1
