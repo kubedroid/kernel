@@ -65,8 +65,11 @@ jobs:
     displayName: Install Broadcom drivers
 
   - script: |
-      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel-build/
-      export install=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel-install/
+      export out=$(pwd)/kernel-build/
+      export install=$(pwd)/kernel-install/
+      mkdir -p $out
+      mkdir -p $install
+
       export gcc=$(pwd)/gcc/bin/$GCC_PREFIX
 
       cd $BUILD_SOURCESDIRECTORY/kernel
