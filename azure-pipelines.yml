@@ -8,6 +8,9 @@ jobs:
   strategy:
     maxParallel: 10
     matrix:
+      4.17-gvt:
+        KERNEL_REPOSITORY: https://github.com/kubedroid/linux
+        KERNEL_BRANCH: kernel-4.17-gvt
       4.18:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.18
@@ -20,6 +23,9 @@ jobs:
       4.20rc4:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.20rc4
+      4.20rc4-gvt:
+        KERNEL_REPOSITORY: https://github.com/kubedroid/linux
+        KERNEL_BRANCH: kernel-4.20rc4-gvt
   steps:
   - script: |
       sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
