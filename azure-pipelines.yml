@@ -1,5 +1,5 @@
 jobs:
-- job: guest-kernel
+- job: guest_kernel
   variables:
     GCC_REPO: https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6
     GCC_PREFIX: x86_64-linux-
@@ -98,7 +98,7 @@ jobs:
       artifactName: $(KERNEL_BRANCH)
     displayName: Publish kernel
 
-- job: host-kernel
+- job: host_kernel
   pool:
     vmImage: 'ubuntu-16.04'
   strategy:
@@ -110,7 +110,6 @@ jobs:
       staging:
         KERNEL_REPOSITORY: https://github.com/intel/gvt-linux
         KERNEL_BRANCH: gvt-staging
-  steps:
   - script: |
       sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
     displayName: Install dependencies
