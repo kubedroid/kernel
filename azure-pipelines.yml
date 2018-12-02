@@ -110,6 +110,7 @@ jobs:
       staging:
         KERNEL_REPOSITORY: https://github.com/intel/gvt-linux
         KERNEL_BRANCH: gvt-staging
+  steps:
   - script: |
       sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
     displayName: Install dependencies
