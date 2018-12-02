@@ -95,7 +95,7 @@ jobs:
       make install
 
       mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
-      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz $install
+      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz -C $install .
     displayName: Compile the Android kernel
 
   - task: PublishBuildArtifacts@1
@@ -139,6 +139,10 @@ jobs:
       echo Configuring kernel configuration
       echo "" | make oldconfig
 
+      # Disabling DEBUG_INFO to prevent the debug packages from being generated,
+      # see https://superuser.com/questions/925079/compile-linux-kernel-deb-pkg-target-without-generating-dbg-package
+      scripts/config --disable DEBUG_INFO
+
       echo Building kernel
       make -j$(nproc --all)
 
@@ -147,11 +151,14 @@ jobs:
       make install
 
       mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
-      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz $install
+      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz -C $install .
 
-      echo Making the Debian package
-      make -j$(nproc --all) deb-pkg
-      cp ../*.deb $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      echo Making the Debian packages
+      make -j$(nproc --all) bindeb-pkg
+
+      echo Copying Debian packages
+      cd ..
+      tar -czf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).deb.tar.gz $(find . -name *.deb)
     displayName: Compile the kernel
 
   - task: PublishBuildArtifacts@1
@@ -162,6 +169,6 @@ jobs:
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/*.deb'
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/$(KERNEL_BRANCH).deb.tar.gz'
       artifactName: $(KERNEL_BRANCH)
     displayName: Publish kernel (package)
