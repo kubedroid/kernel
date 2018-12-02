@@ -89,11 +89,11 @@ jobs:
       make install
 
       mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
-      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/kernel.tar.gz $install
+      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz $install
     displayName: Compile the Android kernel
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/kernel.tar.gz'
-      artifactName: kernel
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/$(KERNEL_BRANCH).tar.gz'
+      artifactName: $(KERNEL_BRANCH)
     displayName: Publish kernel
