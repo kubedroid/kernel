@@ -1,5 +1,5 @@
 jobs:
-- job: kernel
+- job: guest-kernel
   variables:
     GCC_REPO: https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6
     GCC_PREFIX: x86_64-linux-
@@ -31,7 +31,7 @@ jobs:
     displayName: Clone the Android repo
 
   - script: |
-      export out=$BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      export out=$(pwd)/kernel-build/
       mkdir -p $out
       cd kernel
 
@@ -97,3 +97,64 @@ jobs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/$(KERNEL_BRANCH).tar.gz'
       artifactName: $(KERNEL_BRANCH)
     displayName: Publish kernel
+
+- job: host-kernel
+  pool:
+    vmImage: 'ubuntu-16.04'
+  strategy:
+    maxParallel: 10
+    matrix:
+      4.17:
+        KERNEL_REPOSITORY: https://github.com/intel/gvt-linux
+        KERNEL_BRANCH: gvt-stable-4.17
+      staging:
+        KERNEL_REPOSITORY: https://github.com/intel/gvt-linux
+        KERNEL_BRANCH: gvt-staging
+  - script: |
+      sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
+    displayName: Install dependencies
+
+  - script: |
+      git clone --depth=1 -b $KERNEL_BRANCH $KERNEL_REPOSITORY kernel
+    displayName: Clone the kernel repo
+
+  - script: |
+      export out=$(pwd)/kernel-build/
+      export install=$(pwd)/kernel-install/
+      mkdir -p $out
+      mkdir -p $install
+      cd kernel
+
+      export O=$out
+      export INSTALL_MOD_PATH=$install
+      export INSTALL_PATH=$install
+
+      echo Configuring kernel configuration
+      echo "" | make oldconfig
+
+      echo Building kernel
+      make -j$(nproc --all)
+
+      echo Installing the kernel and kernel modules
+      make modules_install
+      make install
+
+      mkdir -p $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+      tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz $install
+
+      echo Making the Debian package
+      make -j$(nproc --all) deb-pkg
+      cp ../*.deb $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/
+    displayName: Compile the kernel
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/$(KERNEL_BRANCH).tar.gz'
+      artifactName: $(KERNEL_BRANCH)
+    displayName: Publish kernel (binary)
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/kernel/*.deb'
+      artifactName: $(KERNEL_BRANCH)
+    displayName: Publish kernel (package)
