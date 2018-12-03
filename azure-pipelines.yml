@@ -158,7 +158,9 @@ jobs:
 
       echo Copying Debian packages
       cd ..
-      tar -czf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).deb.tar.gz $(find . -name *.deb)
+      find var/log -iname '*.deb' -print0
+      find var/log -iname '*.deb' -print0 | tar -cvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).deb.tar --null -T -
+      gzip $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).deb.tar
     displayName: Compile the kernel
 
   - task: PublishBuildArtifacts@1
