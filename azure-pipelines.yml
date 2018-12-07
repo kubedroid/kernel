@@ -26,9 +26,6 @@ jobs:
       4.20rc4-gvt:
         KERNEL_REPOSITORY: https://github.com/kubedroid/linux
         KERNEL_BRANCH: kernel-4.20rc4-gvt
-      4.20rc4-gvt:
-        KERNEL_REPOSITORY: https://github.com/kubedroid/linux
-        KERNEL_BRANCH: kernel-4.20rc4-gvt
       gvt-next-android:
         KERNEL_REPOSITORY: https://github.com/kubedroid/linux
         KERNEL_BRANCH: gvt-next-android
