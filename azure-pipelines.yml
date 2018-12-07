@@ -11,24 +11,31 @@ jobs:
       4.17-gvt:
         KERNEL_REPOSITORY: https://github.com/kubedroid/linux
         KERNEL_BRANCH: kernel-4.17-gvt
+        INSTALL_BROADCOM: yes
       4.18:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.18
+        INSTALL_BROADCOM: yes
       4.19:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.19
+        INSTALL_BROADCOM: yes
       4.20rc1:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.20rc1
+        INSTALL_BROADCOM: yes
       4.20rc4:
         KERNEL_REPOSITORY: https://github.com/maurossi/linux
         KERNEL_BRANCH: kernel-4.20rc4
+        INSTALL_BROADCOM: yes
       4.20rc4-gvt:
         KERNEL_REPOSITORY: https://github.com/kubedroid/linux
         KERNEL_BRANCH: kernel-4.20rc4-gvt
+        INSTALL_BROADCOM: yes
       gvt-next-android:
         KERNEL_REPOSITORY: https://github.com/kubedroid/linux
         KERNEL_BRANCH: gvt-next-android
+        INSTALL_BROADCOM: no
   steps:
   - script: |
       sudo apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget
@@ -72,6 +79,7 @@ jobs:
       patch -p1 -d $BROADCOM_DIR -i linux-412.patch
       patch -p1 -d $BROADCOM_DIR -i linux-415.patch
     displayName: Install Broadcom drivers
+    condition: and(succeeded(), eq(variables['INSTALL_BROADCOM'], 'yes'))
 
   - script: |
       export out=$(pwd)/kernel-build/
