@@ -95,7 +95,7 @@ jobs:
       export CROSS_COMPILE=$gcc
       export INSTALL_MOD_PATH=$install
       export INSTALL_PATH=$install
-      export LOCALVERSION=kubedroid-$(BUILD_BUILDNUMBER)
+      export LOCALVERSION="-kubedroid-guest-$(BUILD_BUILDNUMBER)"
 
       make android-x86_64_defconfig
 
@@ -147,7 +147,7 @@ jobs:
       export O=$out
       export INSTALL_MOD_PATH=$install
       export INSTALL_PATH=$install
-      export LOCALVERSION=kubedroid-$(BUILD_BUILDNUMBER)
+      export LOCALVERSION="-kubedroid-host-$(BUILD_BUILDNUMBER)"
 
       echo Configuring kernel configuration
       copy ../config-4.15.0-42-generic .config
