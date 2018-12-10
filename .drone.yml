@@ -7,7 +7,10 @@ platform:
 
 steps:
 - name: kernel
-  image: ubuntu:bionic
+  # Use Xenial to get version 1.18 of dpkg. This will create tar.gz archives instead of tar.xz archives.
+  # See https://stackoverflow.com/questions/48330328/bintray-unable-to-upload-files-could-not-extract-metadata-for-artifact-from
+  # and https://askubuntu.com/questions/396088/build-data-tar-gz-instead-of-data-tar-xz-inside-deb/525946
+  image: ubuntu:xenial
   environment:
     KERNEL_REPO: https://github.com/intel/gvt-linux
     KERNEL_BRANCH: gvt-stable-4.17
