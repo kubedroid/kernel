@@ -150,7 +150,7 @@ jobs:
       export LOCALVERSION="-kubedroid-host-$(BUILD_BUILDNUMBER)"
 
       echo Configuring kernel configuration
-      copy ../config-4.15.0-42-generic .config
+      cp ../config-4.15.0-42-generic .config
       echo "" | make oldconfig
 
       # Disabling DEBUG_INFO to prevent the debug packages from being generated,
