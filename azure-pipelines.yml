@@ -148,7 +148,8 @@ jobs:
       export INSTALL_PATH=$install
 
       echo Configuring kernel configuration
-      echo "" | make olddefconfig
+      copy ../config-4.15.0-42-generic .config
+      echo "" | make oldconfig
 
       # Disabling DEBUG_INFO to prevent the debug packages from being generated,
       # see https://superuser.com/questions/925079/compile-linux-kernel-deb-pkg-target-without-generating-dbg-package
