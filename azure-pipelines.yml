@@ -147,7 +147,7 @@ jobs:
       export O=$out
       export INSTALL_MOD_PATH=$install
       export INSTALL_PATH=$install
-      export LOCALVERSION="-kubedroid-host-$(BUILD_BUILDNUMBER)"
+      export LOCALVERSION="-kubedroid-host-${BUILD_BUILDNUMBER}"
 
       echo Configuring kernel configuration
       cp ../config-4.15.0-42-generic .config
