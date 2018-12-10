@@ -100,7 +100,7 @@ jobs:
       make android-x86_64_defconfig
 
       echo Building kernel
-      make -j$(nproc --all)
+      make -j$(nproc)
 
       echo Installing the kernel and kernel modules
       make modules_install
@@ -158,7 +158,7 @@ jobs:
       scripts/config --disable DEBUG_INFO
 
       echo Building kernel
-      make -j$(nproc --all)
+      make -j$(nproc)
 
       echo Installing the kernel and kernel modules
       make modules_install
@@ -168,7 +168,7 @@ jobs:
       tar -zcvf $BUILD_ARTIFACTSTAGINGDIRECTORY/kernel/$(KERNEL_BRANCH).tar.gz -C $install .
 
       echo Making the Debian packages
-      make -j$(nproc --all) bindeb-pkg
+      make -j$(nproc) bindeb-pkg
 
       echo Copying Debian packages
       cd ..
