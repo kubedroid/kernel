@@ -1,0 +1,50 @@
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: kernel
+  image: ubuntu:bionic
+  environment:
+    KERNEL_REPO: https://github.com/intel/gvt-linux
+    KERNEL_BRANCH: gvt-stable-4.17
+    BINTRAY_USER:
+      from_secret: BINTRAY_USER
+    BINTRAY_API_KEY:
+      from_secret: BINTRAY_API_KEY
+  commands:
+  - apt-get update
+  - apt-get install -y build-essential git bison flex libssl-dev libelf-dev bc python wget kmod cpio curl
+  - git clone --depth=1 -b $$KERNEL_BRANCH $KERNEL_REPO kernel
+  - |
+      export out=$(pwd)/kernel-build/
+      export install=$(pwd)/kernel-install/
+      mkdir -p $out
+      mkdir -p $install
+      cd kernel
+
+      export O=$out
+      export INSTALL_MOD_PATH=$install
+      export INSTALL_PATH=$install
+      export LOCALVERSION="-$$DRONE_BUILD_NUMBER-kubedroid-host"
+
+      echo Configuring kernel configuration
+      cp ../config-4.15.0-42-generic .config
+      echo "" | make oldconfig
+
+      # Disabling DEBUG_INFO to prevent the debug packages from being generated,
+      # see https://superuser.com/questions/925079/compile-linux-kernel-deb-pkg-target-without-generating-dbg-package
+      scripts/config --disable DEBUG_INFO
+
+      echo Building kernel
+      make -j$(nproc)
+
+      echo Making the Debian packages
+      make -j$(nproc) bindeb-pkg
+
+      echo Publishing the Debian package
+      curl -i -H "X-Bintray-Debian-Distribution: bionic" -H "X-Bintray-Debian-Component: main" -H "X-Bintray-Debian-Architecture: amd64" -T ../linux-image-4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host_4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host-1_amd64.deb -u$BINTRAY_USER:$BINTRAY_API_KEY https://api.bintray.com/content/kubedroid/kernel/linux-image/4.17.0-$$DRONE_BUILD_NUMBER/linux-image-4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host_amd64.deb;publish=1
+      curl -i -H "X-Bintray-Debian-Distribution: bionic" -H "X-Bintray-Debian-Component: main" -H "X-Bintray-Debian-Architecture: amd64" -T ../linux-headers-4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host_4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host-1_amd64.deb -u$BINTRAY_USER:$BINTRAY_API_KEY https://api.bintray.com/content/kubedroid/kernel/linux-headers/4.17.0-$$DRONE_BUILD_NUMBER/linux-headers-4.17.0-$$DRONE_BUILD_NUMBER-kubedroid-host_amd64.deb;publish=1
